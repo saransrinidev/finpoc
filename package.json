@@ -4,6 +4,6 @@
   "private": true,
   "description": "Digian time & expense dashboard",
   "scripts": {
-    "start": "node server.js"
+    "start": "node dev-server.js"
   }
 }

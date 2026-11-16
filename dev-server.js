@@ -1,12 +1,14 @@
-// Minimal static file server for the Digian app (no dependencies).
-// Usage:  node server.js            -> http://0.0.0.0:8080
-//         set PORT=3000 & node server.js
+// Local static file server for the Digian app (no dependencies).
+// Serves the public/ folder. Not used on Vercel, which serves public/ from its CDN.
+// Named dev-server.js on purpose: Vercel auto-deploys a root server.js as a function.
+// Usage:  npm start                 -> http://0.0.0.0:8080
+//         set PORT=3000 & npm start
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
 
-const ROOT = __dirname;
+const ROOT = path.join(__dirname, "public");
 const PORT = Number(process.env.PORT) || 8080;
 const HOST = process.env.HOST || "0.0.0.0"; // 0.0.0.0 = reachable from other devices
 
@@ -20,9 +22,6 @@ const TYPES = {
   ".svg": "image/svg+xml",
   ".ico": "image/x-icon"
 };
-
-// Only these files/folders are served; server.js and anything else stay private.
-const PUBLIC = ["index.html", "styles.css", "js"];
 
 function send(res, status, body, type) {
   res.writeHead(status, {
@@ -47,10 +46,9 @@ const server = http.createServer((req, res) => {
 
   const file = path.normalize(path.join(ROOT, urlPath));
   const rel = path.relative(ROOT, file);
-  const top = rel.split(path.sep)[0];
 
-  // Block path traversal and anything not in the public list.
-  if (rel.startsWith("..") || path.isAbsolute(rel) || !PUBLIC.includes(top)) return send(res, 404, "Not found");
+  // Only files inside public/ are served; block path traversal.
+  if (rel.startsWith("..") || path.isAbsolute(rel)) return send(res, 404, "Not found");
 
   fs.stat(file, (err, stat) => {
     if (err || !stat.isFile()) return send(res, 404, "Not found");
