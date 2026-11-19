@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Digian UI Guide · Design rules and Laws of UX</title>
+  <script>
+    (function () {
+      var saved = null;
+      try { saved = localStorage.getItem("digian-theme"); } catch (e) {}
+      var dark = saved ? saved === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <!-- The guide uses the app's real stylesheet, so every example below is the live component. -->
+  <link rel="stylesheet" href="../public/styles.css" />
+  <style>
+    /* Guide-only layout. Colors and sizes still come from the app's tokens. */
+    html { scroll-behavior: smooth; scroll-padding-top: 5rem; }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+    body { line-height: 1.55; }
+
+    .g-top {
+      position: sticky; top: 0; z-index: 50;
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+      height: 3.75rem; padding: 0 1.5rem;
+      background: var(--topbar); border-bottom: 1px solid var(--border);
+    }
+    .g-brand { display: flex; align-items: center; gap: 0.6rem; font-family: var(--font-display); font-weight: var(--display-weight); font-size: 1.6rem; letter-spacing: var(--display-tracking); line-height: 1; }
+    .g-brand small { font-weight: 600; font-size: var(--fs-sm); color: var(--muted); }
+
+    .g-shell { display: grid; grid-template-columns: 15rem minmax(0, 1fr); gap: 2rem; max-width: 84rem; margin: 0 auto; padding: 1.5rem; }
+    .g-toc { position: sticky; top: 5.25rem; align-self: start; display: flex; flex-direction: column; gap: 0.15rem; }
+    .g-toc a { padding: 0.45rem 0.75rem; border-radius: var(--r-md); font-size: var(--fs-sm); font-weight: 600; color: var(--text-2); }
+    .g-toc a:hover { background: var(--surface-hover); color: var(--text); }
+    .g-toc a.on { background: var(--primary-soft); color: var(--accent-text); }
+    .g-toc .g-toc-label { font-size: var(--fs-xs); font-weight: 700; color: var(--muted); padding: 0.75rem 0.75rem 0.25rem; }
+
+    .g-main { display: flex; flex-direction: column; gap: 2.5rem; min-width: 0; }
+    .g-section { display: flex; flex-direction: column; gap: 1rem; }
+    .g-section > h2 { font-size: 2rem; }
+    .g-lead { color: var(--text-2); max-width: 48rem; }
+
+    .g-hero { padding: 2rem; display: grid; grid-template-columns: 1.4fr 1fr; gap: 1.5rem; align-items: center; }
+    .g-hero h1 { font-size: 3rem; }
+    .g-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+    .g-stat { padding: 1rem; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-md); }
+    .g-stat b { display: block; font-family: var(--font-display); font-size: 2.2rem; font-weight: var(--display-weight); letter-spacing: var(--display-tracking); line-height: 1.1; }
+    .g-stat span { font-size: var(--fs-xs); color: var(--muted); font-weight: 600; }
+
+    .g-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: 1rem; }
+    .g-swatch { overflow: hidden; }
+    .g-swatch i { display: block; height: 3.5rem; border-bottom: 1px solid var(--border); }
+    .g-swatch div { padding: 0.65rem 0.8rem; }
+    .g-swatch code { font-size: var(--fs-xs); color: var(--muted); }
+    .g-swatches { grid-template-columns: repeat(4, 1fr); }
+    .g-two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .g-comp { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    @media (min-width: 1800px) { .g-comp { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+    @media (max-width: 760px) { .g-comp { grid-template-columns: 1fr; } }
+    @media (max-width: 760px) { .g-swatches { grid-template-columns: repeat(2, 1fr); } .g-two { grid-template-columns: 1fr; } }
+
+    code, .g-code { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 0.85em; }
+    .g-code { display: block; padding: 1rem; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-md); white-space: pre; overflow-x: auto; color: var(--text); line-height: 1.6; }
+    p code, li code, td code { background: var(--neutral-soft); color: var(--neutral-strong); padding: 0.1rem 0.35rem; border-radius: var(--r-sm); }
+
+    .g-demo { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+    .g-demo-card { padding: 1.25rem; display: flex; flex-direction: column; gap: 0.9rem; }
+    .g-demo-card h3, .g-law h3, .g-page h3 { font-size: var(--fs-md); font-weight: 700; }
+    .g-note { font-size: var(--fs-xs); color: var(--muted); }
+
+    .g-type div { display: flex; align-items: baseline; gap: 1rem; padding: 0.5rem 0; border-top: 1px solid var(--border); }
+    .g-type div:first-child { border-top: 0; }
+    .g-type code { width: 6.5rem; flex-shrink: 0; color: var(--muted); }
+
+    /* Filter bar */
+    .g-filter { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+    .g-search {
+      flex: 1 1 16rem; min-height: var(--control-h); padding: 0 0.85rem;
+      font: inherit; font-size: var(--fs-sm); color: var(--text);
+      background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--r-md);
+    }
+    .g-search:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--ring); }
+    .g-count { font-size: var(--fs-xs); color: var(--muted); font-weight: 600; }
+
+    /* Law cards */
+    .g-law { padding: 1.25rem; display: flex; flex-direction: column; gap: 0.7rem; }
+    .g-law-head { display: flex; justify-content: space-between; gap: 0.75rem; align-items: flex-start; }
+    .g-law-def { font-size: var(--fs-sm); color: var(--muted); font-style: italic; }
+    .g-law dl { display: grid; gap: 0.55rem; font-size: var(--fs-sm); }
+    .g-law dt { font-size: var(--fs-xs); font-weight: 700; color: var(--muted); }
+    .g-law dd { color: var(--text-2); }
+    .g-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .g-chip { font-size: var(--fs-xs); font-weight: 600; padding: 0.15rem 0.5rem; border-radius: var(--r-full); background: var(--neutral-soft); color: var(--neutral-strong); white-space: nowrap; }
+    .g-law-grid { grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr)); }
+
+    /* Page map */
+    .g-role { display: flex; flex-direction: column; gap: 0.75rem; }
+    .g-role-head { display: flex; align-items: center; gap: 0.6rem; }
+    .g-page { padding: 1.1rem 1.25rem; display: flex; flex-direction: column; gap: 0.6rem; }
+    .g-page-top { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+    .g-page p { font-size: var(--fs-sm); color: var(--text-2); }
+    .g-page ul { padding-left: 1.1rem; font-size: var(--fs-sm); color: var(--text-2); display: grid; gap: 0.3rem; }
+    .g-page li b { color: var(--text); }
+
+    .g-steps { counter-reset: s; list-style: none; display: grid; gap: 0.75rem; }
+    .g-steps li { counter-increment: s; display: flex; gap: 0.85rem; align-items: flex-start; padding: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); font-size: var(--fs-sm); }
+    .g-steps li::before { content: counter(s); flex-shrink: 0; width: 1.75rem; height: 1.75rem; border-radius: 50%; display: grid; place-items: center; background: var(--primary); color: var(--on-primary); font-weight: 700; font-size: var(--fs-sm); }
+
+    .g-list { padding-left: 1.1rem; display: grid; gap: 0.4rem; font-size: var(--fs-sm); color: var(--text-2); }
+    .g-main:focus { outline: none; }
+    .g-foot { padding: 2rem 0 1rem; font-size: var(--fs-xs); color: var(--muted); border-top: 1px solid var(--border); }
+    .g-hidden { display: none !important; }
+
+    @media (max-width: 960px) {
+      .g-shell { grid-template-columns: 1fr; }
+      .g-toc { position: static; flex-direction: row; overflow-x: auto; padding-bottom: 0.25rem; }
+      .g-toc .g-toc-label { display: none; }
+      .g-toc a { white-space: nowrap; }
+      .g-hero { grid-template-columns: 1fr; padding: 1.5rem; }
+    }
+    @media (max-width: 600px) {
+      .g-shell { padding: 1rem; }
+      .g-top { padding: 0 1rem; }
+      .g-brand small { display: none; }
+      .g-hero h1 { font-size: 2.3rem; }
+      .g-law-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+
+  <header class="g-top">
+    <div class="g-brand">
+      <span class="brand-logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.5"/><path d="M7 3h10"/></svg>
+      </span>
+      Digian <small>UI Guide</small>
+    </div>
+    <button class="icon-btn theme-toggle" id="themeToggle" aria-label="Switch to dark theme" title="Switch theme">
+      <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    </button>
+  </header>
+
+  <div class="g-shell">
+    <nav class="g-toc" aria-label="Guide sections">
+      <div class="g-toc-label">Guide</div>
+      <a href="#overview">Overview</a>
+      <a href="#tokens">Design tokens</a>
+      <a href="#components">Components</a>
+      <a href="#laws">Laws of UX</a>
+      <a href="#a11y">Accessibility</a>
+      <a href="#pages">Page by page</a>
+      <a href="#next">Not used yet</a>
+      <a href="#howto">How to change</a>
+    </nav>
+
+    <main class="g-main" id="main" tabindex="-1">
+
+      <!-- ============ OVERVIEW ============ -->
+      <section class="g-section" id="overview" aria-labelledby="h-overview">
+        <div class="card g-hero">
+          <div>
+            <h1 id="h-overview">How the Digian UI is built</h1>
+            <p class="g-lead">This guide lists the design rules and <a class="link" href="https://lawsofux.com/" target="_blank" rel="noopener">Laws of UX</a> used in the app, how each one was implemented, which pages use it, and why it helps. Every example on this page is the real component from <code>public/styles.css</code>, so it matches the app exactly. Try the theme button at the top right.</p>
+          </div>
+          <div class="g-stats">
+            <div class="g-stat"><b id="statLaws">21</b><span>Laws of UX applied</span></div>
+            <div class="g-stat"><b>18</b><span>Pages across 3 roles</span></div>
+            <div class="g-stat"><b>4.5:1</b><span>Minimum text contrast</span></div>
+            <div class="g-stat"><b>44px</b><span>Touch target size</span></div>
+          </div>
+        </div>
+
+        <div class="g-grid g-two">
+          <div class="card g-demo-card">
+            <h3>Files</h3>
+            <ul class="g-list">
+              <li><code>public/styles.css</code>: tokens, components, themes, responsive rules</li>
+              <li><code>public/index.html</code>: skip link, theme button, live region</li>
+              <li><code>public/js/views.js</code>: page markup, sentence-case labels</li>
+              <li><code>public/js/app.js</code>: theme, focus handling, Undo, modal focus trap</li>
+            </ul>
+          </div>
+          <div class="card g-demo-card">
+            <h3>Labels used in this guide</h3>
+            <div class="g-demo">
+              <span class="pill pill-blue">Added in remodel</span>
+              <span class="pill pill-gray">Already there</span>
+              <span class="pill pill-amber">Idea, not built</span>
+            </div>
+            <p class="g-note">"Already there" means the original design had it; the remodel kept it and made it more consistent.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ TOKENS ============ -->
+      <section class="g-section" id="tokens" aria-labelledby="h-tokens">
+        <h2 id="h-tokens">Design tokens</h2>
+        <p class="g-lead">Every color, size, radius and shadow is a CSS variable in the <code>:root</code> block of <code>styles.css</code>. Change one and every page updates. The dark theme overrides the same names under <code>[data-theme="dark"]</code>, so these swatches change when you switch theme.</p>
+
+        <div class="g-grid g-swatches" id="swatches"></div>
+
+        <div class="g-grid g-two">
+          <div class="card g-demo-card">
+            <h3>Type scale</h3>
+            <div class="g-type">
+              <div><code>--fs-2xl</code><span style="font-size:var(--fs-2xl);font-weight:800">$63,440</span></div>
+              <div><code>--fs-xl</code><span style="font-size:var(--fs-xl);font-weight:800">Page title</span></div>
+              <div><code>--fs-lg</code><span style="font-size:var(--fs-lg);font-weight:700">Modal title</span></div>
+              <div><code>--fs-md</code><span style="font-size:var(--fs-md);font-weight:700">Card title</span></div>
+              <div><code>--fs-sm</code><span style="font-size:var(--fs-sm)">Body, buttons, tables</span></div>
+              <div><code>--fs-xs</code><span style="font-size:var(--fs-xs)">Notes, pills (smallest size)</span></div>
+            </div>
+          </div>
+          <div class="card g-demo-card">
+            <h3>Radius, controls and shadows</h3>
+            <div class="g-demo">
+              <span class="g-chip" style="border-radius:var(--r-sm)">--r-sm</span>
+              <span class="g-chip" style="border-radius:var(--r-md)">--r-md</span>
+              <span class="g-chip" style="border-radius:var(--r-lg)">--r-lg</span>
+              <span class="g-chip">--r-full</span>
+            </div>
+            <div class="g-demo">
+              <button class="btn btn-light" type="button">--control-h</button>
+              <button class="btn btn-light btn-sm" type="button">--control-h-sm</button>
+            </div>
+            <div class="g-demo">
+              <span class="g-stat" style="box-shadow:var(--shadow-sm)">sm</span>
+              <span class="g-stat" style="box-shadow:var(--shadow-md)">md</span>
+              <span class="g-stat" style="box-shadow:var(--shadow-lg)">lg</span>
+            </div>
+            <p class="g-note">Cards use sm, hovered items md, and menus and modals lg. Every control height is 44px on touch screens.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ COMPONENTS ============ -->
+      <section class="g-section" id="components" aria-labelledby="h-components">
+        <h2 id="h-components">Components</h2>
+        <p class="g-lead">These are the building blocks every page uses. Each is one CSS rule with small variants, so it looks and behaves the same everywhere.</p>
+
+        <div class="g-grid g-comp">
+          <div class="card g-demo-card">
+            <h3>Buttons <code>.btn</code></h3>
+            <div class="g-demo">
+              <button class="btn btn-primary" type="button">Approve</button>
+              <button class="btn btn-light" type="button">Reject</button>
+              <button class="btn btn-danger" type="button">Delete</button>
+              <button class="btn btn-primary" type="button" disabled>Disabled</button>
+            </div>
+            <div class="g-demo">
+              <button class="btn btn-sm btn-primary" type="button">Small</button>
+              <button class="btn btn-sm btn-light" type="button">Small light</button>
+            </div>
+            <p class="g-note">One solid primary button per area (Von Restorff). Variants only change color.</p>
+          </div>
+
+          <div class="card g-demo-card">
+            <h3>Status pills <code>.pill</code></h3>
+            <div class="g-demo">
+              <span class="pill pill-mint">Approved</span>
+              <span class="pill pill-blue">Submitted</span>
+              <span class="pill pill-amber">At risk</span>
+              <span class="pill pill-red">Overdue</span>
+              <span class="pill pill-gray">Draft</span>
+            </div>
+            <p class="g-note">Same color means the same status on every page (Law of Similarity). The text always names the status, so color is never the only signal.</p>
+          </div>
+
+          <div class="card kpi">
+            <div class="kpi-label">Billable utilization</div>
+            <div class="kpi-value">80.5%</div>
+            <div class="kpi-sub text-amber">Target 85% · Nov 09 – Nov 15</div>
+            <p class="g-note" style="margin-top:0.75rem">KPI card: label, value and note grouped tightly (Law of Proximity). Numbers use tabular figures.</p>
+          </div>
+
+          <div class="card g-demo-card">
+            <h3>Tabs <code>.tabs</code></h3>
+            <div class="tabs" role="tablist" aria-label="Example tabs">
+              <button class="tab active" role="tab" aria-selected="true" type="button">All <span class="tab-count">5</span></button>
+              <button class="tab" role="tab" aria-selected="false" type="button">Timesheets <span class="tab-count">3</span></button>
+              <button class="tab" role="tab" aria-selected="false" type="button">Expenses <span class="tab-count">2</span></button>
+            </div>
+            <p class="g-note">One shaded track holds all tabs (Law of Common Region). Screen readers hear which tab is selected.</p>
+          </div>
+
+          <div class="card g-demo-card">
+            <h3>List item <code>.so-item</code></h3>
+            <a class="so-item task" href="#components">
+              <div class="so-avatar blue">DV</div>
+              <div class="so-info"><div class="so-name">Devon Vance</div><div class="so-meta">41.5 hrs · <span class="text-amber">Overtime 1.5h</span></div></div>
+              <span class="tag tag-blue">Timesheet</span>
+            </a>
+            <p class="g-note">Hover it: only clickable items lift. The amber flag stands out from the grey text.</p>
+          </div>
+
+          <div class="card g-demo-card">
+            <h3>Form field <code>.field</code></h3>
+            <div class="field">
+              <label for="demoAmount">Amount (USD)</label>
+              <input id="demoAmount" type="number" placeholder="0.00" />
+              <div class="field-error">Enter an amount greater than 0.</div>
+            </div>
+            <p class="g-note">Label above the input, error right under it with a ⚠ sign, focus ring on click.</p>
+          </div>
+
+          <div class="card g-demo-card">
+            <h3>Progress <code>.progress</code></h3>
+            <div class="proj-progress"><div class="progress"><div class="progress-fill" style="width:64%"></div></div><span>512 / 800 h</span></div>
+            <div class="proj-progress"><div class="progress"><div class="progress-fill amber" style="width:88%"></div></div><span>704 / 800 h</span></div>
+            <div class="proj-progress"><div class="progress"><div class="progress-fill red" style="width:97%"></div></div><span>776 / 800 h</span></div>
+            <p class="g-note">Visible progress toward a goal (Goal-Gradient Effect).</p>
+          </div>
+
+          <div class="card g-demo-card">
+            <h3>Toast with Undo</h3>
+            <div class="toast" style="animation:none">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>
+              <span>Approved timesheet from Devon Vance</span>
+              <button class="toast-action" type="button">Undo</button>
+            </div>
+            <p class="g-note">Ends the task on a good note and makes mistakes reversible (Peak-End Rule).</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ LAWS ============ -->
+      <section class="g-section" id="laws" aria-labelledby="h-laws">
+        <h2 id="h-laws">Laws of UX in the app</h2>
+        <p class="g-lead">Each card says what the law means, how it was applied, which pages use it and what users gain. Definitions are summarized from <a class="link" href="https://lawsofux.com/" target="_blank" rel="noopener">lawsofux.com</a>.</p>
+
+        <div class="g-filter">
+          <label class="sr-only" for="lawSearch">Search laws</label>
+          <input class="g-search" id="lawSearch" type="search" placeholder="Search a law, page or word, e.g. Fitts, Approvals, mobile" />
+          <div class="tabs" role="tablist" aria-label="Filter laws">
+            <button class="tab active" role="tab" aria-selected="true" type="button" data-filter="all">All</button>
+            <button class="tab" role="tab" aria-selected="false" type="button" data-filter="added">Added</button>
+            <button class="tab" role="tab" aria-selected="false" type="button" data-filter="existing">Already there</button>
+          </div>
+          <span class="g-count" id="lawCount" aria-live="polite"></span>
+        </div>
+
+        <div class="g-grid g-law-grid" id="lawGrid"></div>
+        <div class="empty g-hidden" id="lawEmpty"><p>No law matches that search.</p></div>
+      </section>
+
+      <!-- ============ ACCESSIBILITY ============ -->
+      <section class="g-section" id="a11y" aria-labelledby="h-a11y">
+        <h2 id="h-a11y">Accessibility and user preferences</h2>
+        <p class="g-lead">These follow WCAG 2.2 AA and the operating system settings people already use. They apply to every page.</p>
+        <div class="card card-pad">
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>Rule</th><th>How</th><th>Who it helps</th></tr></thead>
+              <tbody id="a11yRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ PAGES ============ -->
+      <section class="g-section" id="pages" aria-labelledby="h-pages">
+        <h2 id="h-pages">Page by page</h2>
+        <p class="g-lead">The app has 3 roles. Switch roles with the avatar menu at the top right of the app. Each page below lists the laws and rules it uses most.</p>
+        <div class="tabs" role="tablist" aria-label="Choose role" id="roleTabs">
+          <button class="tab active" role="tab" aria-selected="true" type="button" data-role="employee">Employee</button>
+          <button class="tab" role="tab" aria-selected="false" type="button" data-role="manager">Manager</button>
+          <button class="tab" role="tab" aria-selected="false" type="button" data-role="admin">Admin (Finance)</button>
+        </div>
+        <div class="g-grid g-law-grid" id="pageGrid"></div>
+      </section>
+
+      <!-- ============ NEXT ============ -->
+      <section class="g-section" id="next" aria-labelledby="h-next">
+        <h2 id="h-next">Laws not used yet</h2>
+        <p class="g-lead">These are ideas for the next round. None of them is built yet.</p>
+        <div class="g-grid" id="nextGrid"></div>
+      </section>
+
+      <!-- ============ HOW TO ============ -->
+      <section class="g-section" id="howto" aria-labelledby="h-howto">
+        <h2 id="h-howto">How to change the look</h2>
+        <ol class="g-steps">
+          <li><div><b>Open <code>public/styles.css</code></b> and find the <code>:root</code> block at the top.</div></li>
+          <li><div><b>Change a token</b>, for example the brand color. Keep white text readable: check the new color has at least 4.5:1 contrast with white.</div></li>
+          <li><div><b>Update the dark theme</b> in the <code>[data-theme="dark"]</code> block if the new color needs a lighter version there.</div></li>
+          <li><div><b>Never hardcode a color</b> in a component rule. Add a new token instead, so dark mode and future changes keep working.</div></li>
+        </ol>
+        <pre class="g-code">:root {
+  --primary: #1f6fd1;        /* buttons, active nav, switches */
+  --primary-hover: #1a5fb4;
+  --accent-text: #1a5fb4;    /* links and icons on white */
+  --r-lg: 0.75rem;           /* card corners */
+  --control-h: 2.5rem;       /* button and input height */
+}</pre>
+      </section>
+
+      <footer class="g-foot">
+        Digian UI Guide · Law definitions summarized from <a class="link" href="https://lawsofux.com/" target="_blank" rel="noopener">lawsofux.com</a> by Jon Yablonski. Contrast targets from WCAG 2.2.
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    /* ---------------- Data ---------------- */
+
+    const SWATCHES = [
+      ["--primary", "Primary actions"], ["--accent-text", "Links, icons"], ["--text", "Main text"], ["--text-2", "Secondary text"],
+      ["--muted", "Labels, hints"], ["--bg", "Page background"], ["--surface", "Cards"], ["--surface-2", "List items"],
+      ["--border", "Borders"], ["--chart", "Chart bars"], ["--track", "Bar track"], ["--success", "OK, on track"],
+      ["--warning", "Attention"], ["--danger", "Errors, critical"], ["--info-soft", "Info pill bg"], ["--success-soft", "Success pill bg"]
+    ];
+
+    const LAWS = [
+      { name: "Jakob's Law", def: "Users prefer your app to work like the other apps they already know.", status: "existing",
+        how: "Left sidebar, breadcrumb top bar, avatar menu at top right, tabs above tables, toasts at bottom right, Escape closes pop-ups. The new theme button uses the standard moon and sun icons.",
+        where: ["All pages", "Top bar", "Sidebar"], benefit: "No learning curve. People already know where things are." },
+      { name: "Aesthetic-Usability Effect", def: "People see attractive design as easier to use.", status: "added",
+        how: "Soft card shadows, calmer list backgrounds, one radius scale, one color system and a full dark theme.",
+        where: ["All pages"], benefit: "Users trust the app more and forgive small issues." },
+      { name: "Law of Similarity", def: "Things that look alike are seen as related.", status: "added",
+        how: "One .btn base for every button. Status colors are fixed tokens: green = OK, blue = in progress, amber = attention, red = problem, grey = draft. All list items share one style.",
+        where: ["Approvals", "Expenses", "Timesheets", "Projects", "Payouts", "Invoicing"], benefit: "A green Approved pill means the same thing on every page." },
+      { name: "Von Restorff Effect", def: "The item that differs from the rest is the one people notice.", status: "added",
+        how: "Only one solid blue primary button per area (Approve, Log time, Submit for approval). Amber flags such as Overtime 1.5h stand out in grey rows.",
+        where: ["Approvals", "Timesheets", "Dashboards", "Expenses ledger"], benefit: "The main action and the problems are seen first." },
+      { name: "Fitts's Law", def: "Bigger and closer targets are faster to hit.", status: "added",
+        how: "Buttons raised to 2.5rem. Every control is at least 44px on touch screens. Full-width buttons on phones, and modals become bottom sheets near the thumb.",
+        where: ["All pages", "Mobile", "New expense form", "Approvals"], benefit: "Fewer mis-clicks, especially on phones." },
+      { name: "Law of Common Region", def: "Things inside one boundary are seen as a group.", status: "existing",
+        how: "Every section is a bordered card. The modal footer has its own tinted strip. Tabs sit in one shaded track. Timesheet totals have a tinted footer row.",
+        where: ["All pages", "Timesheets", "Modals"], benefit: "Users instantly see which information belongs together." },
+      { name: "Law of Proximity", def: "Things close together are seen as related.", status: "added",
+        how: "KPI label, value and note stacked tightly. Gaps between cards (1rem) are larger than gaps inside them. Card footers sit apart from content with a divider.",
+        where: ["Dashboards", "All KPI rows"], benefit: "Clear grouping without extra lines or boxes." },
+      { name: "Chunking", def: "Break information into small, meaningful groups.", status: "existing",
+        how: "Each dashboard reads top to bottom: 4 KPI cards, then main chart beside the queue, then a detail section.",
+        where: ["Employee dashboard", "Manager dashboard", "Executive overview"], benefit: "A page can be scanned in seconds." },
+      { name: "Miller's Law", def: "People hold about 7 items in working memory.", status: "existing",
+        how: "4 KPIs per page, 3 to 4 preview items in queues, and 4 to 7 nav links per role.",
+        where: ["Dashboards", "Sidebar"], benefit: "Nothing overloads short-term memory." },
+      { name: "Hick's Law", def: "More choices make decisions slower.", status: "existing",
+        how: "Each role only sees its own pages and actions. One clear primary button per screen.",
+        where: ["Sidebar", "All page headers"], benefit: "Faster decisions with less hesitation." },
+      { name: "Cognitive Load", def: "The mental effort needed to use an interface.", status: "added",
+        how: "Sentence-case labels instead of ALL CAPS. Tabular numbers so amounts line up. Smallest text raised to 0.8rem. Fewer heavy backgrounds.",
+        where: ["All KPI cards", "Tables", "Ledger", "Invoicing"], benefit: "Less effort to read and compare numbers." },
+      { name: "Selective Attention", def: "People focus on what serves their goal.", status: "added",
+        how: "Secondary text uses the muted token, values use strong dark text. Only clickable items react on hover.",
+        where: ["All pages"], benefit: "Eyes go to numbers and actions, not decoration." },
+      { name: "Postel's Law", def: "Be liberal in what you accept, consistent in what you give back.", status: "added",
+        how: "Theme follows the OS until the user picks one. Supports reduced motion, high contrast, Windows High Contrast and the browser font size setting.",
+        where: ["All pages", "User settings"], benefit: "Works for many users and devices without setup." },
+      { name: "Peak-End Rule", def: "People judge an experience by its peak and its end.", status: "added",
+        how: "A success toast ends every action. Approving shows an Undo button for 6 seconds.",
+        where: ["Approvals", "Expenses", "Timesheets", "Invoicing", "Payouts"], benefit: "Tasks end on a good note and mistakes are easy to fix." },
+      { name: "Doherty Threshold", def: "Responses under 400ms keep people engaged.", status: "added",
+        how: "Theme switch only changes variables. Hover and press feedback take 150ms. Page, toast, modal and menu animations (Motion) take 200 to 450ms and are skipped for users who prefer reduced motion.",
+        where: ["All pages"], benefit: "The app feels instant." },
+      { name: "Zeigarnik Effect", def: "People remember unfinished tasks.", status: "existing",
+        how: "Employee To Do list, Missing receipts KPI, badge counts on Approvals. Badges are now also read out by screen readers.",
+        where: ["Employee dashboard", "Sidebar", "Expenses"], benefit: "Users come back to finish open work." },
+      { name: "Goal-Gradient Effect", def: "Effort increases as the goal gets closer.", status: "existing",
+        how: "Daily hours bars against 8h, weekly hours against 40h, project budget bars, hours remaining.",
+        where: ["Employee dashboard", "Timesheets", "Projects", "Manager dashboard"], benefit: "Visible progress motivates people to finish." },
+      { name: "Law of Prägnanz", def: "People read complex visuals as the simplest form.", status: "added",
+        how: "Simple shapes, rounded pills, line icons, no gradients or decoration.",
+        where: ["All pages"], benefit: "Faster to understand at a glance." },
+      { name: "Mental Model", def: "People expect systems to work the way they already think they do.", status: "existing",
+        how: "Approve and Reject pairs, Draft to Submitted to Approved to Paid status flow, bank-style money formatting.",
+        where: ["Approvals", "Expenses", "Reimbursements", "Payouts"], benefit: "Behaves the way finance users expect." },
+      { name: "Tesler's Law", def: "Some complexity can't be removed, only moved.", status: "existing",
+        how: "Routing rules (manager first, then finance for timesheets and expenses over $500) run inside the app. The user only clicks Approve.",
+        where: ["Approvals", "Policy & Settings"], benefit: "The system carries the complexity, not the user." },
+      { name: "Paradox of the Active User", def: "People don't read manuals; they start using the app.", status: "added",
+        how: "Empty states explain the next step. Form errors appear right under the field. Disabled buttons show why they can't be used yet.",
+        where: ["Timesheets", "Expenses", "New expense form", "Approvals"], benefit: "People learn while doing." }
+    ];
+
+    const A11Y = [
+      ["Text contrast of at least 4.5:1", "Primary blue is #1f6fd1 (4.9:1 with white). Warning text darkened. Pill text uses strong colors.", "Low vision, bright sunlight"],
+      ["Readable minimum size", "Smallest text is 0.8rem. Sizes use rem so the browser font setting works.", "Older users, low vision"],
+      ["44px touch targets", "@media (pointer: coarse) raises every control height.", "Phone and tablet users, motor impairments"],
+      ["Visible keyboard focus", ":focus-visible outline and focus ring on inputs.", "Keyboard users"],
+      ["Skip to main content", "Hidden link that appears on Tab.", "Keyboard and screen reader users"],
+      ["Focus moves on page change", "Focus goes to the page title after navigation.", "Screen reader users"],
+      ["Focus stays in modals", "Tab and Shift+Tab loop inside the open dialog.", "Keyboard users"],
+      ["Color is never the only signal", "Pills have text, flags have icon and text, errors have a ⚠ sign.", "Color-blind users"],
+      ["Names for icon-only items", "Screen-reader text on badges, receipt icons and the role button.", "Screen reader users"],
+      ["Correct ARIA", "aria-selected on tabs, aria-current on nav, live region for toasts.", "Screen reader users"],
+      ["Dark mode", "Follows the OS until the user picks, remembered per browser.", "Low light, light sensitivity"],
+      ["Reduced motion", "Animations turned off when the OS asks.", "Motion sensitivity, vestibular disorders"],
+      ["More contrast", "Stronger borders and text with prefers-contrast: more.", "Low vision"],
+      ["Windows High Contrast", "Shapes keep borders when Windows replaces colors.", "High Contrast mode users"]
+    ];
+
+    const PAGES = {
+      employee: [
+        { title: "Dashboard", route: "#/dashboard", what: "Personal greeting, hours, reimbursements and a To Do list.",
+          rules: [["Chunking", "4 KPIs, then hours chart beside To Do, then recent expenses"], ["Zeigarnik Effect", "To Do list of open tasks"], ["Goal-Gradient Effect", "Daily bars against an 8h day"], ["Von Restorff Effect", "Log time is the only solid button"]] },
+        { title: "My Timesheets", route: "#/timesheets", what: "Weekly grid to log hours per project and submit.",
+          rules: [["Law of Common Region", "Weekend columns and totals row are tinted"], ["Cognitive Load", "Totals update live, numbers line up"], ["Paradox of the Active User", "Empty state explains Add line"], ["Peak-End Rule", "Toast after submitting"]] },
+        { title: "My Expenses", route: "#/expenses", what: "Expense list with filters and a New expense form.",
+          rules: [["Law of Similarity", "Status pills match every other page"], ["Fitts's Law", "Form becomes a bottom sheet on phones"], ["Paradox of the Active User", "Errors under each field"], ["Accessibility", "Receipt icons have spoken names"]] },
+        { title: "Reimbursements", route: "#/reimbursements", what: "Next payout and payout history.",
+          rules: [["Mental Model", "Bank-style amounts and statuses"], ["Law of Proximity", "Two side-by-side cards: next payout and history"], ["Cognitive Load", "Tabular numbers in amount columns"]] }
+      ],
+      manager: [
+        { title: "Team Overview", route: "#/dashboard", what: "Team utilization, approval queue and project budgets.",
+          rules: [["Chunking", "KPIs, chart and queue, then budgets"], ["Goal-Gradient Effect", "Budget bars per project"], ["Von Restorff Effect", "Amber and red bars for at-risk projects"], ["Layout fix", "Cards can't overlap at any height"]] },
+        { title: "Approvals", route: "#/approvals", what: "Review, approve or reject team submissions.",
+          rules: [["Von Restorff Effect", "Flags stand out in amber"], ["Peak-End Rule", "Undo for 6 seconds after approving"], ["Hick's Law", "Two clear actions per row: Reject and Approve"], ["Fitts's Law", "44px buttons on touch screens"]] },
+        { title: "Team", route: "#/team", what: "Hours and timesheet status per team member.",
+          rules: [["Von Restorff Effect", "Utilization under 70% shown in amber"], ["Zeigarnik Effect", "Remind button for missing timesheets"], ["Law of Similarity", "Same progress bar as Projects"]] },
+        { title: "Projects", route: "#/projects", what: "Budget burn for every engagement.",
+          rules: [["Goal-Gradient Effect", "Used versus budget bars"], ["Law of Similarity", "On track, At risk and Critical pills"], ["Chunking", "Table first, then project cards"]] },
+        { title: "My Timesheets / My Expenses", route: "#/timesheets, #/expenses", what: "The same pages employees use, for the manager's own time and expenses.",
+          rules: [["Jakob's Law", "Identical to the employee pages"], ["Mental Model", "Same submit and approval flow"]] },
+        { title: "Reports", route: "#/reports", what: "Hours by project and CSV downloads.",
+          rules: [["Law of Common Region", "Each report in its own row"], ["Hick's Law", "Three clearly named exports"]] }
+      ],
+      admin: [
+        { title: "Executive Overview", route: "#/dashboard", what: "Company utilization, sign-off queue, billing and payout schedule.",
+          rules: [["Chunking", "KPIs, chart and queue, then schedule"], ["Von Restorff Effect", "Amber when utilization is below target"], ["Zeigarnik Effect", "Pending Sign-Off count"]] },
+        { title: "Timesheets", route: "#/timesheets", what: "Company-wide timesheet compliance.",
+          rules: [["Goal-Gradient Effect", "Submitted versus headcount bars"], ["Zeigarnik Effect", "Missing timesheets with Remind buttons"], ["Hick's Law", "One primary action: Remind all missing"]] },
+        { title: "Expenses (ledger)", route: "#/expenses", what: "All company expenses with policy checks.",
+          rules: [["Von Restorff Effect", "Policy flags in amber, OK in green"], ["Cognitive Load", "Amounts line up with tabular numbers"], ["Law of Similarity", "Same tabs and pills as other lists"]] },
+        { title: "Approvals", route: "#/approvals", what: "Final finance review after managers approve.",
+          rules: [["Peak-End Rule", "Undo after approving"], ["Tesler's Law", "Routing over $500 handled by the app"], ["Fitts's Law", "Large Approve and Reject buttons"]] },
+        { title: "Reports & Invoicing", route: "#/reports", what: "Send invoices and track receivables.",
+          rules: [["Von Restorff Effect", "Overdue invoices in red"], ["Mental Model", "Ready, Sent and Overdue statuses"], ["Peak-End Rule", "Toast after sending"]] },
+        { title: "Payouts", route: "#/reimbursements", what: "Release ADP direct deposit batches.",
+          rules: [["Mental Model", "Bank-style batch, account and amount"], ["Hick's Law", "One action: Release batch"]] },
+        { title: "Policy & Settings", route: "#/settings", what: "Approval workflow, policy limits, rules and integrations.",
+          rules: [["Chunking", "Workflow shown as 4 numbered steps"], ["Accessibility", "Switches work with keyboard and show focus"], ["Law of Common Region", "Each integration in its own card"]] }
+      ]
+    };
+
+    const NEXT = [
+      ["Serial Position Effect", "Put the most-used nav items first and last, for example Dashboard at the top and Settings at the bottom."],
+      ["Choice Overload", "The Expenses filter has 6 tabs. Show 3 and put the rest under More."],
+      ["Law of Uniform Connectedness", "Join the approval steps in Settings with a line so they read as one flow."],
+      ["Flow", "Keyboard shortcuts such as A to approve and N for a new expense."],
+      ["Pareto Principle", "Track the most-used 20% of actions and make them faster to reach."],
+      ["Parkinson's Law", "Show countdowns such as Due in 2 days to encourage earlier submission."],
+      ["Occam's Razor", "Review each screen for elements that can be removed."],
+      ["Cognitive Bias", "Check that default values and amount displays don't anchor decisions."]
+    ];
+
+    /* ---------------- Rendering ---------------- */
+
+    const $ = (s) => document.querySelector(s);
+    const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    const statusPill = (s) => s === "added" ? '<span class="pill pill-blue">Added in remodel</span>' : '<span class="pill pill-gray">Already there</span>';
+
+    $("#swatches").innerHTML = SWATCHES.map(([v, use]) =>
+      `<div class="card g-swatch"><i style="background:var(${v})"></i><div><div class="so-name">${esc(use)}</div><code>${v}</code></div></div>`).join("");
+
+    $("#statLaws").textContent = LAWS.length;
+
+    function renderLaws() {
+      const q = $("#lawSearch").value.trim().toLowerCase();
+      const f = document.querySelector("#laws [data-filter].active").dataset.filter;
+      const shown = LAWS.filter((l) => (f === "all" || l.status === f) &&
+        (!q || [l.name, l.def, l.how, l.benefit, ...l.where].join(" ").toLowerCase().includes(q)));
+      $("#lawGrid").innerHTML = shown.map((l) => `<article class="card g-law">
+          <div class="g-law-head"><h3>${esc(l.name)}</h3>${statusPill(l.status)}</div>
+          <p class="g-law-def">${esc(l.def)}</p>
+          <dl>
+            <div><dt>How it's used</dt><dd>${esc(l.how)}</dd></div>
+            <div><dt>Where</dt><dd class="g-chips">${l.where.map((w) => `<span class="g-chip">${esc(w)}</span>`).join("")}</dd></div>
+            <div><dt>Benefit</dt><dd>${esc(l.benefit)}</dd></div>
+          </dl>
+        </article>`).join("");
+      $("#lawEmpty").classList.toggle("g-hidden", shown.length > 0);
+      $("#lawCount").textContent = `${shown.length} of ${LAWS.length} laws`;
+    }
+
+    function renderPages(role) {
+      $("#pageGrid").innerHTML = PAGES[role].map((p) => `<article class="card g-page">
+          <div class="g-page-top"><h3>${esc(p.title)}</h3><code>${esc(p.route)}</code></div>
+          <p>${esc(p.what)}</p>
+          <ul>${p.rules.map(([law, how]) => `<li><b>${esc(law)}:</b> ${esc(how)}</li>`).join("")}</ul>
+        </article>`).join("");
+    }
+
+    $("#a11yRows").innerHTML = A11Y.map(([r, h, w]) => `<tr><td class="cell-title">${esc(r)}</td><td>${esc(h)}</td><td>${esc(w)}</td></tr>`).join("");
+    $("#nextGrid").innerHTML = NEXT.map(([n, idea]) => `<article class="card g-law"><div class="g-law-head"><h3>${esc(n)}</h3><span class="pill pill-amber">Idea</span></div><p class="g-law-def" style="font-style:normal">${esc(idea)}</p></article>`).join("");
+
+    // Tab groups: one active tab per group
+    function wireTabs(container, onChange) {
+      container.addEventListener("click", (e) => {
+        const t = e.target.closest(".tab");
+        if (!t) return;
+        container.querySelectorAll(".tab").forEach((x) => { x.classList.toggle("active", x === t); x.setAttribute("aria-selected", String(x === t)); });
+        onChange(t);
+      });
+    }
+    wireTabs(document.querySelector("#laws .tabs"), renderLaws);
+    wireTabs($("#roleTabs"), (t) => renderPages(t.dataset.role));
+    $("#lawSearch").addEventListener("input", renderLaws);
+
+    renderLaws();
+    renderPages("employee");
+
+    // Highlight the section in view
+    const links = [...document.querySelectorAll(".g-toc a")];
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((en) => {
+        if (en.isIntersecting) links.forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#" + en.target.id));
+      });
+    }, { rootMargin: "-30% 0px -60% 0px" });
+    document.querySelectorAll(".g-section").forEach((s) => io.observe(s));
+
+    // Theme toggle, shared with the app
+    const themeBtn = $("#themeToggle");
+    function applyTheme(t) {
+      document.documentElement.setAttribute("data-theme", t);
+      themeBtn.setAttribute("aria-label", t === "dark" ? "Switch to light theme" : "Switch to dark theme");
+    }
+    themeBtn.addEventListener("click", () => {
+      const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      try { localStorage.setItem("digian-theme", next); } catch (e) {}
+      applyTheme(next);
+    });
+    applyTheme(document.documentElement.getAttribute("data-theme"));
+
+    // Skip link focuses main content without changing the URL
+    document.querySelector(".skip-link").addEventListener("click", (e) => { e.preventDefault(); $("#main").focus(); });
+  </script>
+</body>
+</html>

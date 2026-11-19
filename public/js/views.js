@@ -66,8 +66,22 @@ function avatar(name, tone) {
   return `<div class="so-avatar ${tone || "blue"}">${esc(initials(name))}</div>`;
 }
 
+// Labels are written in capitals at the call sites; show them in sentence case,
+// which is easier to read, while keeping acronyms such as MTD or DSO intact.
+const ACRONYMS = new Set(["AR", "DSO", "MTD", "YTD", "ACH", "ERP"]);
+function sentenceCase(label) {
+  return String(label)
+    .split(" ")
+    .map((w, i) => {
+      if (ACRONYMS.has(w.replace(/[^A-Za-z]/g, ""))) return w;
+      const l = w.toLowerCase();
+      return i === 0 ? l.charAt(0).toUpperCase() + l.slice(1) : l;
+    })
+    .join(" ");
+}
+
 function kpi(label, value, sub, subCls) {
-  return `<div class="card kpi"><div class="kpi-label">${label}</div><div class="kpi-value">${value}</div><div class="kpi-sub ${subCls || ""}">${sub}</div></div>`;
+  return `<div class="card kpi"><div class="kpi-label">${sentenceCase(label)}</div><div class="kpi-value">${value}</div><div class="kpi-sub ${subCls || ""}">${sub}</div></div>`;
 }
 
 function progress(value, tone) {
@@ -104,7 +118,7 @@ function emptyState(text) {
 
 function tabs(key, items) {
   return `<div class="tabs" role="tablist">${items
-    .map((t) => `<button class="tab ${S.ui[key] === t.label ? "active" : ""}" role="tab" data-action="tab" data-key="${key}" data-value="${esc(t.label)}">${esc(t.label)}${t.count != null ? `<span class="tab-count">${t.count}</span>` : ""}</button>`)
+    .map((t) => `<button class="tab ${S.ui[key] === t.label ? "active" : ""}" role="tab" aria-selected="${S.ui[key] === t.label}" data-action="tab" data-key="${key}" data-value="${esc(t.label)}">${esc(t.label)}${t.count != null ? `<span class="tab-count">${t.count}</span>` : ""}</button>`)
     .join("")}</div>`;
 }
 
@@ -115,7 +129,7 @@ function cardHead(title, sub, right) {
 function pageHead(title, subtitle, actions) {
   return `<div class="page-head">
     <div>
-      <h1>${title}</h1>
+      <h1 id="pageTitle" tabindex="-1">${title}</h1>
       <p class="subtitle">${subtitle}</p>
     </div>
     <div class="actions">${actions || ""}</div>
@@ -239,7 +253,7 @@ function viewMyExpenses(role) {
     cell(esc(e.merchant), `${e.id}${e.note ? ` · <span class="text-red">${esc(e.note)}</span>` : ""}`),
     esc(e.category),
     esc(e.project),
-    `<span class="${e.receipt ? "text-teal" : "text-amber"}" title="${e.receipt ? "Receipt attached" : "Receipt missing"}">${icon(e.receipt ? "paperclip" : "alert", "ic-sm")}</span>`,
+    `<span class="${e.receipt ? "text-teal" : "text-amber"}" title="${e.receipt ? "Receipt attached" : "Receipt missing"}">${icon(e.receipt ? "paperclip" : "alert", "ic-sm")}<span class="sr-only">${e.receipt ? "Receipt attached" : "Receipt missing"}</span></span>`,
     `<span class="strong">${money(e.amount)}</span>`,
     pill(e.status),
     e.status === "Draft"
@@ -366,7 +380,7 @@ function viewEmployeeDashboard() {
       <div class="tl-grid">${ex
         .slice(0, 3)
         .map((e) => `<a class="tl-item" href="#/expenses">
-          <div class="tl-top"><span>${esc(e.date.toUpperCase())}, 2026</span>${pill(e.status)}</div>
+          <div class="tl-top"><span>${esc(e.date)}, 2026</span>${pill(e.status)}</div>
           <div class="tl-title">${esc(e.merchant)}</div>
           <div class="tl-sub">${esc(e.category)} · ${money(e.amount)}</div>
         </a>`)
@@ -460,7 +474,7 @@ function projectCard(p) {
   const st = projectStatus(p);
   const u = pct(p.used, p.budget);
   return `<div class="tl-item">
-    <div class="tl-top"><span>${esc(p.client.toUpperCase())}</span>${pill(st)}</div>
+    <div class="tl-top"><span>${esc(p.client)}</span>${pill(st)}</div>
     <div class="tl-title">${esc(p.name)}</div>
     <div class="tl-sub">${p.code} · ${esc(p.type)} · Due ${p.due}</div>
     <div class="proj-progress">${progress(u, st === "Critical" ? "red" : st === "At risk" ? "amber" : "")}<span>${p.used.toLocaleString()} / ${p.budget.toLocaleString()} h</span></div>
@@ -616,17 +630,17 @@ function viewAdminDashboard() {
       ${cardHead("Billing &amp; Payout Schedule", "Upcoming invoicing, payouts and accounting sync", `<div class="ledger">${icon("checkCircle")}Period closes Nov 30, 23:59 EST</div>`)}
       <div class="tl-grid">
         <a class="tl-item" href="#/reports">
-          <div class="tl-top"><span>NOV 30, 2026</span>${pill(ready.length ? "Scheduled" : "Sent", ready.length ? "blue" : "mint")}</div>
+          <div class="tl-top"><span>Nov 30, 2026</span>${pill(ready.length ? "Scheduled" : "Sent", ready.length ? "blue" : "mint")}</div>
           <div class="tl-title">Next Invoice Run</div>
           <div class="tl-sub">${ready.length} customer invoices · ${money0(sum(ready, (i) => i.amount))}</div>
         </a>
         <a class="tl-item" href="#/reimbursements">
-          <div class="tl-top"><span>NOV 20, 2026</span>${pill(batch.status, batch.status === "Scheduled" ? "blue" : "amber")}</div>
+          <div class="tl-top"><span>Nov 20, 2026</span>${pill(batch.status, batch.status === "Scheduled" ? "blue" : "amber")}</div>
           <div class="tl-title">Direct Deposit / ACH</div>
           <div class="tl-sub">${receipts} receipts · ${money(batchTotal)}</div>
         </a>
         <a class="tl-item" href="#/settings">
-          <div class="tl-top"><span>NETSUITE LIVE</span><span class="pill pill-mint"><i></i>Active</span></div>
+          <div class="tl-top"><span>NetSuite · Live</span><span class="pill pill-mint"><i></i>Active</span></div>
           <div class="tl-title">ERP Sync Status</div>
           <div class="tl-sub">Synced 14m ago · 0 conflicts</div>
         </a>

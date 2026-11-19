@@ -25,16 +25,19 @@ function currentNav() {
   return S.roles[S.role].nav.find((n) => n.id === page);
 }
 
+let lastRenderKey = "";
+
 function render() {
   const role = S.roles[S.role];
   const page = currentPage();
+  const renderKey = `${S.role}:${page}`;
 
   // Sidebar navigation
   $("#nav").innerHTML = role.nav
     .map((n) => {
       const count = n.badge ? S.approvals[S.role].length : 0;
       return `<a href="#/${n.id}" class="nav-item ${n.id === page ? "active" : ""}" title="${esc(n.label)}" ${n.id === page ? 'aria-current="page"' : ""}>
-        ${icon(n.icon)}<span class="label">${esc(n.label)}</span>${count ? `<span class="nav-badge">${count}</span>` : ""}
+        ${icon(n.icon)}<span class="label">${esc(n.label)}</span>${count ? `<span class="nav-badge">${count}<span class="sr-only"> waiting</span></span>` : ""}
       </a>`;
     })
     .join("");
@@ -55,11 +58,24 @@ function render() {
   view.innerHTML = VIEWS[S.role][page]();
   view.dataset.page = page;
   document.title = `${currentNav().label} · Digian`;
+
+  // Tell the motion layer (js/motion.js) only when the page or role changed,
+  // not on in-page updates such as ticking a checkbox.
+  if (renderKey !== lastRenderKey) {
+    lastRenderKey = renderKey;
+    document.dispatchEvent(new CustomEvent("digian:pagechange", { detail: { page, role: S.role } }));
+  }
 }
 
 function go(page) {
   if (location.hash === `#/${page}`) render();
   else location.hash = `#/${page}`;
+}
+
+// Move keyboard and screen-reader focus to the new page's heading.
+function focusPageTitle() {
+  const h = $("#pageTitle");
+  if (h) h.focus({ preventScroll: true });
 }
 
 window.addEventListener("hashchange", () => {
@@ -68,7 +84,37 @@ window.addEventListener("hashchange", () => {
   $(".main").scrollTo(0, 0);
   window.scrollTo(0, 0);
   closeDrawer();
+  focusPageTitle();
 });
+
+$("#skipLink").addEventListener("click", (e) => {
+  e.preventDefault();
+  focusPageTitle();
+});
+
+/* ---------------- Theme ---------------- */
+
+const THEME_KEY = "digian-theme";
+const themeBtn = $("#themeToggle");
+const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  themeBtn.setAttribute("aria-label", theme === "dark" ? "Switch to light theme" : "Switch to dark theme");
+}
+
+themeBtn.addEventListener("click", () => {
+  const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+  localStorage.setItem(THEME_KEY, next);
+  applyTheme(next);
+});
+
+// Follow the operating system setting until the user picks a theme here.
+darkQuery.addEventListener("change", (e) => {
+  if (!localStorage.getItem(THEME_KEY)) applyTheme(e.matches ? "dark" : "light");
+});
+
+applyTheme(document.documentElement.getAttribute("data-theme") || "light");
 
 /* ---------------- Role switcher ---------------- */
 
@@ -104,14 +150,28 @@ document.addEventListener("click", (e) => {
 
 /* ---------------- Toasts ---------------- */
 
-function toast(msg, tone) {
+// Optional `action` = { label, fn } adds a button (e.g. Undo) and keeps the toast up longer.
+function toast(msg, tone, action) {
   const el = document.createElement("div");
   el.className = `toast ${tone || ""}`;
-  el.setAttribute("role", "status");
   el.innerHTML = `${icon(tone === "warn" ? "alert" : "checkCircle")}<span>${esc(msg)}</span>`;
+  const remove = () => {
+    el.classList.add("out");
+    setTimeout(() => el.remove(), 300);
+  };
+  if (action) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "toast-action";
+    b.textContent = action.label;
+    b.addEventListener("click", () => {
+      remove();
+      action.fn();
+    });
+    el.appendChild(b);
+  }
   $("#toasts").appendChild(el);
-  setTimeout(() => el.classList.add("out"), 2600);
-  setTimeout(() => el.remove(), 3000);
+  setTimeout(remove, action ? 6000 : 3000);
 }
 
 /* ---------------- Modal ---------------- */
@@ -137,6 +197,22 @@ function openModal(title, body, submitLabel, onSubmit) {
   const first = modalRoot.querySelector("input, select, textarea");
   if (first) first.focus();
 }
+
+// Keep Tab / Shift+Tab inside the open modal.
+modalRoot.addEventListener("keydown", (e) => {
+  if (e.key !== "Tab") return;
+  const items = [...modalRoot.querySelectorAll("button, input, select, textarea, a[href]")].filter((x) => !x.disabled);
+  if (!items.length) return;
+  const first = items[0];
+  const last = items[items.length - 1];
+  if (e.shiftKey && document.activeElement === first) {
+    e.preventDefault();
+    last.focus();
+  } else if (!e.shiftKey && document.activeElement === last) {
+    e.preventDefault();
+    first.focus();
+  }
+});
 
 function closeModal() {
   modalRoot.hidden = true;
@@ -217,6 +293,22 @@ function approve(ids) {
     S.ui.selected.delete(id);
   });
   S.approvals[S.role] = q.filter((a) => !ids.includes(a.id));
+}
+
+// Copy of the data an approval can change, so it can be undone.
+function snapshot() {
+  return structuredClone({ approvals: S.approvals, expenses: S.expenses, timesheets: S.timesheets, ledger: S.ledger });
+}
+
+function undoAction(snap) {
+  return {
+    label: "Undo",
+    fn() {
+      Object.assign(S, snap);
+      render();
+      toast("Approval undone");
+    }
+  };
 }
 
 /* ---------------- Expense form ---------------- */
@@ -382,15 +474,17 @@ const ACTIONS = {
   },
   approve(el) {
     const item = S.approvals[S.role].find((a) => a.id === el.dataset.id);
+    const snap = snapshot();
     approve([el.dataset.id]);
     render();
-    if (item) toast(`Approved ${item.type.toLowerCase()} from ${item.name}`);
+    if (item) toast(`Approved ${item.type.toLowerCase()} from ${item.name}`, "", undoAction(snap));
   },
   "approve-selected"() {
     const ids = [...S.ui.selected];
+    const snap = snapshot();
     approve(ids);
     render();
-    toast(`Approved ${ids.length} item${ids.length === 1 ? "" : "s"}`);
+    toast(`Approved ${ids.length} item${ids.length === 1 ? "" : "s"}`, "", undoAction(snap));
   },
   reject(el) {
     const item = S.approvals[S.role].find((a) => a.id === el.dataset.id);
