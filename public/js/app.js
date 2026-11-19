@@ -96,7 +96,6 @@ $("#skipLink").addEventListener("click", (e) => {
 
 const THEME_KEY = "digian-theme";
 const themeBtn = $("#themeToggle");
-const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
 function applyTheme(theme) {
   document.documentElement.setAttribute("data-theme", theme);
@@ -109,11 +108,8 @@ themeBtn.addEventListener("click", () => {
   applyTheme(next);
 });
 
-// Follow the operating system setting until the user picks a theme here.
-darkQuery.addEventListener("change", (e) => {
-  if (!localStorage.getItem(THEME_KEY)) applyTheme(e.matches ? "dark" : "light");
-});
-
+// Light is the default. The theme only changes when the user presses the theme button;
+// the early script in index.html restores their saved choice before the page paints.
 applyTheme(document.documentElement.getAttribute("data-theme") || "light");
 
 /* ---------------- Role switcher ---------------- */

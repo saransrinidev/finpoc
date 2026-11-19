@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="color-scheme" content="light dark" />
+  <meta name="color-scheme" content="light" />
   <title>Digian UI Guide · Design rules and Laws of UX</title>
   <script>
     (function () {
       var saved = null;
       try { saved = localStorage.getItem("digian-theme"); } catch (e) {}
-      var dark = saved ? saved === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+      var dark = saved === "dark"; // light is the default; only a saved choice switches to dark
       document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
     })();
   </script>
@@ -456,7 +456,7 @@
         how: "Secondary text uses the muted token, values use strong dark text. Only clickable items react on hover.",
         where: ["All pages"], benefit: "Eyes go to numbers and actions, not decoration." },
       { name: "Postel's Law", def: "Be liberal in what you accept, consistent in what you give back.", status: "added",
-        how: "Theme follows the OS until the user picks one. Supports reduced motion, high contrast, Windows High Contrast and the browser font size setting.",
+        how: "Light theme by default; the user's dark-mode choice is remembered. Supports reduced motion, high contrast, Windows High Contrast and the browser font size setting.",
         where: ["All pages", "User settings"], benefit: "Works for many users and devices without setup." },
       { name: "Peak-End Rule", def: "People judge an experience by its peak and its end.", status: "added",
         how: "A success toast ends every action. Approving shows an Undo button for 6 seconds.",
@@ -495,7 +495,7 @@
       ["Color is never the only signal", "Pills have text, flags have icon and text, errors have a ⚠ sign.", "Color-blind users"],
       ["Names for icon-only items", "Screen-reader text on badges, receipt icons and the role button.", "Screen reader users"],
       ["Correct ARIA", "aria-selected on tabs, aria-current on nav, live region for toasts.", "Screen reader users"],
-      ["Dark mode", "Follows the OS until the user picks, remembered per browser.", "Low light, light sensitivity"],
+      ["Dark mode", "Light by default. A button switches to dark and the choice is remembered per browser.", "Low light, light sensitivity"],
       ["Reduced motion", "Animations turned off when the OS asks.", "Motion sensitivity, vestibular disorders"],
       ["More contrast", "Stronger borders and text with prefers-contrast: more.", "Low vision"],
       ["Windows High Contrast", "Shapes keep borders when Windows replaces colors.", "High Contrast mode users"]
